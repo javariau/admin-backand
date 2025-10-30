@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Kuis - Admin CMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --light: #f8f9fa;
+            --dark: #212529;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f5f7fb; 
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Back to Dashboard Button */
+        .back-to-dashboard {
+            margin-bottom: 20px;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: white;
+            color: var(--primary);
+            text-decoration: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: var(--primary);
+            color: white;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .page-header h2 { color: #333; font-size: 1.8rem; }
+        
+        /* Content Sections */
+        .content-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+        }
+        .section-body { padding: 30px; }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        .table { 
+            width: 100%; 
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        .table th, .table td { 
+            padding: 15px 20px; 
+            text-align: left; 
+            border-bottom: 1px solid #eee; 
+        }
+        .table th { 
+            background: #f8f9fa; 
+            font-weight: 600; 
+            color: #555;
+            position: sticky;
+            top: 0;
+        }
+        .table tr:hover { background: #f8f9fa; }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-outline { background: transparent; border: 1px solid #ddd; color: #666; }
+        .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .form-group { margin-bottom: 25px; }
+        .form-label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            color: #555;
+            font-size: 0.9rem;
+        }
+        .form-control { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        .form-control:focus { 
+            outline: none; 
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        textarea.form-control { min-height: 120px; resize: vertical; }
+        
+        /* File Upload */
+        .file-upload {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: border 0.3s;
+        }
+        .file-upload:hover { border-color: var(--primary); }
+        .file-upload i { font-size: 2rem; color: #666; margin-bottom: 10px; }
+        .file-input { display: none; }
+        .preview-image {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+        .badge-primary { background: #cce7ff; color: #004085; }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 900px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-body { padding: 30px; }
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        /* Quiz Questions */
+        .quiz-questions-container {
+            margin-top: 30px;
+        }
+        .question-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #e9ecef;
+        }
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .question-number {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .question-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .option-item.correct {
+            border-color: var(--success);
+            background: #d4edda;
+        }
+        .option-item:hover {
+            border-color: var(--primary);
+        }
+        .option-letter {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .option-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            outline: none;
+        }
+        .option-correct {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .question-options {
+                grid-template-columns: 1fr;
+            }
+            .modal-content {
+                width: 95%;
+                margin: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Back to Dashboard Button -->
+        <div class="back-to-dashboard">
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Kembali ke Dashboard
+            </a>
+        </div>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h2>Manajemen Kuis</h2>
+                <small>Kelola kuis dan pertanyaan</small>
+            </div>
+            <button class="btn btn-primary" onclick="showQuizzesModal()">
+                <i class="fas fa-plus"></i> Tambah Kuis
+            </button>
+        </div>
+
+        <!-- Quizzes Section -->
+        <div class="content-section">
+            <div class="section-header">
+                <h3><i class="fas fa-question-circle"></i> Daftar Kuis</h3>
+            </div>
+            <div class="section-body">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Judul</th>
+                                <th>Gambar</th>
+                                <th>Jumlah Pertanyaan</th>
+                                <th>Durasi</th>
+                                <th>Rating</th>
+                                <th>Tanggal Dibuat</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quizzes-table">
+                            <!-- Data kuis akan diisi oleh JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk Tambah/Edit Kuis -->
+    <div id="quizzes-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="quizzes-modal-title">Tambah Kuis Baru</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeQuizzesModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="quizzes-form">
+                    <input type="hidden" id="quizzes-id" name="id">
+                    
+                    <!-- Informasi Kuis -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Judul Kuis *</label>
+                            <input type="text" class="form-control" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Durasi</label>
+                            <input type="text" class="form-control" name="duration" placeholder="Contoh: 30 menit">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Gambar Kuis</label>
+                        <div class="file-upload" onclick="document.getElementById('quizzes-image-upload').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Klik untuk upload gambar kuis</p>
+                            <small>Format: JPG, PNG, GIF (Max 2MB)</small>
+                            <img id="quizzes-image-preview" class="preview-image" alt="Preview">
+                        </div>
+                        <input type="file" id="quizzes-image-upload" class="file-input" accept="image/*" onchange="previewImage(this, 'quizzes-image-preview')">
+                    </div>
+
+                    <!-- Pertanyaan Kuis -->
+                    <div class="quiz-questions-container">
+                        <div class="section-header" style="margin: 30px 0 20px 0; padding: 0; border-bottom: 1px solid #eee;">
+                            <h4>Pertanyaan Kuis</h4>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addQuestion()">
+                                <i class="fas fa-plus"></i> Tambah Pertanyaan
+                            </button>
+                        </div>
+                        
+                        <div id="questions-container">
+                            <!-- Pertanyaan akan ditambahkan di sini -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveQuizzes()">
+                    <i class="fas fa-save"></i> Simpan Kuis
+                </button>
+                <button class="btn btn-outline" onclick="closeQuizzesModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Konfirmasi Hapus</h3>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message">Apakah Anda yakin ingin menghapus kuis ini?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="confirm-delete-btn">
+                    <i class="fas fa-trash"></i> Ya, Hapus
+                </button>
+                <button class="btn btn-outline" onclick="closeConfirmModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Sample
+        let quizzes = [];
+        let questions = [];
+        let options = [];
+
+        let currentEditingItem = null;
+        let questionCounter = 0;
+
+        // Inisialisasi data sample
+        function initializeSampleData() {
+            // LOAD DATA DARI localStorage
+            const savedQuizData = localStorage.getItem('quizzesData');
+            if (savedQuizData) {
+                const quizData = JSON.parse(savedQuizData);
+                quizzes = quizData.quizzes || [];
+                questions = quizData.questions || [];
+                options = quizData.options || [];
+            } else {
+                // Data default jika tidak ada data tersimpan
+                quizzes = [
+                    { 
+                        id: 1, 
+                        title: "Kuis Matematika Dasar", 
+                        image_url: null, 
+                        question_count: 3, 
+                        duration: "30 menit", 
+                        rating: 4.5, 
+                        created_at: "2024-02-20" 
+                    },
+                    { 
+                        id: 2, 
+                        title: "Kuis Bahasa Inggris", 
+                        image_url: null, 
+                        question_count: 2, 
+                        duration: "45 menit", 
+                        rating: 4.2, 
+                        created_at: "2024-02-21" 
+                    }
+                ];
+                questions = [
+                    { id: 1, quiz_id: 1, question_text: "Berapakah hasil dari 2 + 2?", order_index: 1 },
+                    { id: 2, quiz_id: 1, question_text: "Apa hasil dari 5 × 3?", order_index: 2 },
+                    { id: 3, quiz_id: 1, question_text: "Berapakah nilai dari 10 ÷ 2?", order_index: 3 },
+                    { id: 4, quiz_id: 2, question_text: "What is the capital of Indonesia?", order_index: 1 },
+                    { id: 5, quiz_id: 2, question_text: "How do you say 'Terima kasih' in English?", order_index: 2 }
+                ];
+                options = [
+                    { id: 1, question_id: 1, option_text: "3", is_correct: false },
+                    { id: 2, question_id: 1, option_text: "4", is_correct: true },
+                    { id: 3, question_id: 1, option_text: "5", is_correct: false },
+                    { id: 4, question_id: 1, option_text: "6", is_correct: false },
+                    { id: 5, question_id: 2, option_text: "15", is_correct: true },
+                    { id: 6, question_id: 2, option_text: "8", is_correct: false },
+                    { id: 7, question_id: 2, option_text: "10", is_correct: false },
+                    { id: 8, question_id: 2, option_text: "12", is_correct: false }
+                ];
+            }
+
+            renderQuizzesTable();
+        }
+
+        // Render quizzes table
+        function renderQuizzesTable() {
+            const tbody = document.getElementById('quizzes-table');
+            tbody.innerHTML = '';
+            
+            quizzes.forEach(q => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${q.title}</td>
+                    <td>${q.image_url ? '<i class="fas fa-image text-success"></i>' : '-'}</td>
+                    <td>${q.question_count}</td>
+                    <td>${q.duration || '-'}</td>
+                    <td>${q.rating}</td>
+                    <td>${formatDate(q.created_at)}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editQuizzes(${q.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete(${q.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ========== QUIZ FUNCTIONS ==========
+        function showQuizzesModal() {
+            document.getElementById('quizzes-modal-title').textContent = 'Tambah Kuis Baru';
+            document.getElementById('quizzes-form').reset();
+            document.getElementById('quizzes-id').value = '';
+            document.getElementById('quizzes-image-preview').style.display = 'none';
+            currentEditingItem = null;
+            questionCounter = 0;
+            
+            // Clear questions container
+            const questionsContainer = document.getElementById('questions-container');
+            questionsContainer.innerHTML = '';
+            
+            // Add initial question
+            addQuestion();
+            
+            document.getElementById('quizzes-modal').style.display = 'flex';
+        }
+
+        function closeQuizzesModal() {
+            document.getElementById('quizzes-modal').style.display = 'none';
+        }
+
+        function editQuizzes(id) {
+            const quizzesData = quizzes.find(q => q.id === id);
+            if (!quizzesData) return;
+            
+            document.getElementById('quizzes-modal-title').textContent = 'Edit Kuis';
+            document.getElementById('quizzes-id').value = quizzesData.id;
+            document.querySelector('#quizzes-form input[name="title"]').value = quizzesData.title;
+            document.querySelector('#quizzes-form input[name="duration"]').value = quizzesData.duration || '';
+            
+            if (quizzesData.image_url) {
+                document.getElementById('quizzes-image-preview').src = quizzesData.image_url;
+                document.getElementById('quizzes-image-preview').style.display = 'block';
+            }
+            
+            // Clear questions container
+            const questionsContainer = document.getElementById('questions-container');
+            questionsContainer.innerHTML = '';
+            questionCounter = 0;
+            
+            // Load existing questions
+            const quizQuestions = questions.filter(q => q.quiz_id === id);
+            quizQuestions.forEach(question => {
+                const questionOptions = options.filter(o => o.question_id === question.id);
+                addQuestion(question.question_text, questionOptions);
+            });
+            
+            currentEditingItem = quizzesData;
+            document.getElementById('quizzes-modal').style.display = 'flex';
+        }
+
+        function addQuestion(questionText = '', questionOptions = []) {
+            const questionsContainer = document.getElementById('questions-container');
+            const questionId = `question-${questionCounter++}`;
+            
+            const questionElement = document.createElement('div');
+            questionElement.className = 'question-item';
+            questionElement.innerHTML = `
+                <div class="question-header">
+                    <div class="question-number">Pertanyaan ${questionCounter}</div>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="removeQuestion(this)">
+                        <i class="fas fa-times"></i> Hapus
+                    </button>
+                </div>
+                <div class="form-group">
+                    <textarea class="form-control" placeholder="Tulis pertanyaan di sini..." rows="3" data-question-id="${questionId}">${questionText}</textarea>
+                </div>
+                <div class="question-options">
+                    ${generateOptions(questionId, questionOptions)}
+                </div>
+            `;
+            
+            questionsContainer.appendChild(questionElement);
+        }
+
+        function generateOptions(questionId, existingOptions = []) {
+            const letters = ['A', 'B', 'C', 'D'];
+            let optionsHTML = '';
+            
+            for (let i = 0; i < 4; i++) {
+                const option = existingOptions[i] || { option_text: '', is_correct: false };
+                optionsHTML += `
+                    <div class="option-item ${option.is_correct ? 'correct' : ''}">
+                        <div class="option-letter">${letters[i]}</div>
+                        <input type="text" class="option-input" placeholder="Opsi ${letters[i]}" 
+                               value="${option.option_text}" data-option-id="${questionId}-${i}">
+                            <input type="radio" name="correct-${questionId}" value="${questionId}-${i}" ${option.is_correct ? 'checked' : ''} 
+                                   onchange="setCorrectOption('${questionId}-${i}')" class="option-correct">
+                    </div>
+                `;
+            }
+            
+            return optionsHTML;
+        }
+
+        function removeQuestion(button) {
+            const questionItem = button.closest('.question-item');
+            questionItem.remove();
+            // Update question numbers
+            updateQuestionNumbers();
+        }
+
+        function updateQuestionNumbers() {
+            const questions = document.querySelectorAll('.question-item');
+            questions.forEach((question, index) => {
+                const numberElement = question.querySelector('.question-number');
+                numberElement.textContent = `Pertanyaan ${index + 1}`;
+            });
+            questionCounter = questions.length;
+        }
+
+        function setCorrectOption(optionId) {
+            try {
+                // questionId like "question-0"
+                const parts = optionId.split('-');
+                const questionId = parts.slice(0, 2).join('-');
+
+                // Remove correct class from all options in the same question
+                document.querySelectorAll(`[data-option-id^="${questionId}"]`).forEach(input => {
+                    const el = input.closest('.option-item');
+                    if (el) el.classList.remove('correct');
+                });
+
+                // Add correct class to selected option (if it exists)
+                const selectedInput = document.querySelector(`[data-option-id="${optionId}"]`);
+                if (selectedInput) {
+                    const parent = selectedInput.closest('.option-item');
+                    if (parent) parent.classList.add('correct');
+                }
+
+                // Ensure the radio button is checked (robust selector)
+                const radio = document.querySelector(`input[name="correct-${questionId}"][value="${optionId}"]`);
+                if (radio) radio.checked = true;
+            } catch (err) {
+                console.error('setCorrectOption error', err);
+            }
+        }
+
+        function saveQuizzes() {
+            console.log('saveQuizzes called');
+            const form = document.getElementById('quizzes-form');
+            const formData = new FormData(form);
+            // safe access to file input (may be missing in some cases)
+            const imageInput = document.getElementById('quizzes-image-upload');
+            const imageFile = imageInput && imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+            
+            // Validate questions
+            const questionElements = document.querySelectorAll('.question-item');
+            if (questionElements.length === 0) {
+                showNotification('Minimal harus ada 1 pertanyaan!', 'warning');
+                return;
+            }
+            
+            let isValid = true;
+            const questionsData = [];
+            
+            questionElements.forEach((questionElement, index) => {
+                const questionText = questionElement.querySelector('textarea').value.trim();
+                const options = questionElement.querySelectorAll('.option-item');
+                let hasCorrectOption = false;
+                let hasValidOptions = true;
+                
+                const optionsData = [];
+                options.forEach((optionElement, optIndex) => {
+                    const optionText = optionElement.querySelector('.option-input').value.trim();
+                    // detect correct option by class first, then fallback to radio checked
+                    let isCorrect = optionElement.classList.contains('correct');
+                    try {
+                        const radio = optionElement.querySelector('.option-correct');
+                        if (!isCorrect && radio && radio.checked) isCorrect = true;
+                    } catch (err) {
+                        // ignore
+                    }
+                    
+                    if (optionText === '') {
+                        hasValidOptions = false;
+                        showNotification(`Pertanyaan ${index + 1}: Opsi ${String.fromCharCode(65 + optIndex)} tidak boleh kosong!`, 'warning');
+                        isValid = false;
+                        return;
+                    }
+                    
+                    if (isCorrect) hasCorrectOption = true;
+                    
+                    optionsData.push({
+                        text: optionText,
+                        is_correct: isCorrect
+                    });
+                });
+                
+                if (!hasValidOptions) return;
+                
+                if (questionText === '') {
+                    showNotification(`Pertanyaan ${index + 1} tidak boleh kosong!`, 'warning');
+                    isValid = false;
+                    return;
+                }
+                
+                if (!hasCorrectOption) {
+                    showNotification(`Pertanyaan ${index + 1}: Harus ada opsi yang benar!`, 'warning');
+                    isValid = false;
+                    return;
+                }
+                
+                questionsData.push({
+                    text: questionText,
+                    options: optionsData,
+                    order_index: index + 1
+                });
+            });
+            
+            if (!isValid) return;
+            
+            const saveQuizzesData = (imageUrl = null) => {
+                console.log('saveQuizzesData called, currentEditingItem:', currentEditingItem);
+                const quizzesData = {
+                    title: formData.get('title'),
+                    duration: formData.get('duration'),
+                    image_url: imageUrl,
+                    question_count: questionsData.length,
+                    rating: 0.0,
+                    created_at: new Date().toISOString()
+                };
+                
+                let quizId;
+                if (currentEditingItem) {
+                    // Update existing quiz
+                    const index = quizzes.findIndex(q => q.id === currentEditingItem.id);
+                    quizId = currentEditingItem.id;
+                    quizzes[index] = { ...quizzes[index], ...quizzesData };
+                    
+                    // Remove existing questions and options
+                    questions = questions.filter(q => q.quiz_id !== quizId);
+                    options = options.filter(o => {
+                        const question = questions.find(q => q.id === o.question_id);
+                        return !question || question.quiz_id !== quizId;
+                    });
+                } else {
+                    // Add new quiz
+                    quizId = quizzes.length > 0 ? Math.max(...quizzes.map(q => q.id)) + 1 : 1;
+                    quizzesData.id = quizId;
+                    quizzes.push(quizzesData);
+                }
+                
+                // Save questions and options
+                try {
+                    console.log('Saving questionsData length:', questionsData.length);
+                    questionsData.forEach((qData, index) => {
+                    const questionId = questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1;
+                    questions.push({
+                        id: questionId,
+                        quiz_id: quizId,
+                        question_text: qData.text,
+                        order_index: qData.order_index
+                    });
+                    
+                    qData.options.forEach(optData => {
+                        const optionId = options.length > 0 ? Math.max(...options.map(o => o.id)) + 1 : 1;
+                        options.push({
+                            id: optionId,
+                            question_id: questionId,
+                            option_text: optData.text,
+                            is_correct: optData.is_correct
+                        });
+                    });
+                    });
+                } catch (errQ) {
+                    console.error('Error while saving questions/options', errQ, {questionsData, questions, options});
+                    throw errQ;
+                }
+                
+                // SIMPAN KE localStorage
+                try {
+                    console.log('Writing to localStorage: quizzes', quizzes.length, 'questions', questions.length, 'options', options.length);
+                    localStorage.setItem('quizzesData', JSON.stringify({
+                        quizzes: quizzes,
+                        questions: questions,
+                        options: options
+                    }));
+                    console.log('localStorage write success');
+                } catch (errLS) {
+                    console.error('localStorage.setItem error', errLS);
+                    // Fallback: try sessionStorage
+                    try {
+                        console.log('Attempting sessionStorage fallback');
+                        sessionStorage.setItem('quizzesData', JSON.stringify({
+                            quizzes: quizzes,
+                            questions: questions,
+                            options: options
+                        }));
+                        console.log('sessionStorage write success (fallback)');
+                        showNotification('LocalStorage tidak tersedia, data disimpan sementara di session (tidak permanen).', 'warning');
+                    } catch (errSS) {
+                        console.error('sessionStorage.setItem error', errSS);
+                        // Final fallback: keep in-memory copy so UI still shows saved data this session
+                        try {
+                            window._quizzesFallback = { quizzes: quizzes, questions: questions, options: options };
+                            console.warn('Saved quizzes to in-memory fallback window._quizzesFallback');
+                            showNotification('Gagal menyimpan pada storage; data hanya tersimpan sementara di sesi browser.', 'danger');
+                        } catch (errMem) {
+                            console.error('in-memory fallback error', errMem);
+                            // As last resort, throw to outer handler
+                            throw errMem;
+                        }
+                    }
+                }
+                
+                renderQuizzesTable();
+                closeQuizzesModal();
+                showNotification('Kuis berhasil disimpan!', 'success');
+            };
+            
+            try {
+                if (imageFile) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        saveQuizzesData(e.target.result);
+                    };
+                    reader.readAsDataURL(imageFile);
+                } else if (currentEditingItem && currentEditingItem.image_url) {
+                    saveQuizzesData(currentEditingItem.image_url);
+                } else {
+                    saveQuizzesData();
+                }
+            } catch (err) {
+                console.error('saveQuizzes error', err);
+                showNotification('Terjadi error saat menyimpan kuis. Cek console untuk detail.', 'danger');
+            }
+        }
+
+        // ========== UTILITY FUNCTIONS ==========
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function confirmDelete(id) {
+            document.getElementById('confirm-message').textContent = 'Apakah Anda yakin ingin menghapus kuis ini?';
+            
+            const deleteBtn = document.getElementById('confirm-delete-btn');
+            deleteBtn.onclick = function() {
+                deleteQuiz(id);
+                closeConfirmModal();
+            };
+            
+            document.getElementById('confirm-modal').style.display = 'flex';
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').style.display = 'none';
+        }
+
+        function deleteQuiz(id) {
+            quizzes = quizzes.filter(q => q.id !== id);
+            questions = questions.filter(q => q.quiz_id !== id);
+            options = options.filter(o => {
+                const question = questions.find(q => q.id === o.question_id);
+                return !question || question.quiz_id !== id;
+            });
+            
+            // UPDATE localStorage
+            localStorage.setItem('quizzesData', JSON.stringify({
+                quizzes: quizzes,
+                questions: questions,
+                options: options
+            }));
+            
+            renderQuizzesTable();
+            showNotification('Kuis berhasil dihapus!', 'success');
+        }
+
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                background: ${type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : type === 'danger' ? '#dc3545' : '#17a2b8'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 1001;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times' : 'info'}-circle"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            initializeSampleData();
+        });
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>

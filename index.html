@@ -1,0 +1,2990 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin CMS - Aplikasi Pembelajaran</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <!--
+                Optional: set Supabase public (anon) key for browser pages that call Supabase directly.
+                Uncomment and replace the values during local dev if you don't want to go through the server API.
+        -->
+        <script>
+            // window.__SUPABASE_URL = 'https://your-project.supabase.co';
+            // window.__SUPABASE_ANON_KEY = 'your_anon_public_key_here';
+        </script>
+        <script>
+            // Dev helper: when the frontend is served on localhost (Vite),
+            // route API calls to the backend running on port 3000.
+            // This is development-only and will not run in production.
+            try {
+                if (location && location.hostname === 'localhost') {
+                    // Default backend address used by `npm start` in this project
+                    window.__API_BASE = window.__API_BASE || 'http://localhost:3000';
+                }
+            } catch (e) {
+                // ignore
+            }
+        </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --light: #f8f9fa;
+            --dark: #212529;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f5f7fb; 
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 20px 0;
+            transition: all 0.3s;
+        }
+        .logo {
+            padding: 0 25px 25px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .logo h1 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        .nav-item {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: #4361ee11;
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+        .nav-item i { 
+            margin-right: 12px; 
+            width: 20px; 
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Top Header */
+        .top-header {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .user-info h4 { margin: 0; color: #333; }
+        .user-info small { color: #666; }
+        
+        /* Content Area */
+        .content-wrapper {
+            padding: 30px;
+            flex: 1;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .page-header h2 { color: #333; font-size: 1.8rem; }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--primary);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card.success { border-left-color: var(--success); }
+        .stat-card.warning { border-left-color: var(--warning); }
+        .stat-card.info { border-left-color: var(--info); }
+        .stat-card h3 { color: #666; font-size: 0.9rem; margin-bottom: 10px; text-transform: uppercase; }
+        .stat-card .number { font-size: 2.5rem; font-weight: bold; color: var(--primary); margin-bottom: 5px; }
+        .stat-card.success .number { color: var(--success); }
+        .stat-card.warning .number { color: var(--warning); }
+        .stat-card.info .number { color: var(--info); }
+        .stat-card .trend { color: #28a745; font-size: 0.9rem; }
+        
+        /* Content Sections */
+        .content-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+            display: none;
+        }
+        .content-section.active { display: block; }
+        
+        .section-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+        }
+        .section-body { padding: 30px; }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        .table { 
+            width: 100%; 
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        .table th, .table td { 
+            padding: 15px 20px; 
+            text-align: left; 
+            border-bottom: 1px solid #eee; 
+        }
+        .table th { 
+            background: #f8f9fa; 
+            font-weight: 600; 
+            color: #555;
+            position: sticky;
+            top: 0;
+        }
+        .table tr:hover { background: #f8f9fa; }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-outline { background: transparent; border: 1px solid #ddd; color: #666; }
+        .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .form-group { margin-bottom: 25px; }
+        .form-label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            color: #555;
+            font-size: 0.9rem;
+        }
+        .form-control { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        .form-control:focus { 
+            outline: none; 
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        textarea.form-control { min-height: 120px; resize: vertical; }
+        
+        /* File Upload */
+        .file-upload {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: border 0.3s;
+        }
+        .file-upload:hover { border-color: var(--primary); }
+        .file-upload i { font-size: 2rem; color: #666; margin-bottom: 10px; }
+        .file-input { display: none; }
+        .preview-image {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        .preview-video {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+        .badge-primary { background: #cce7ff; color: #004085; }
+        
+        /* Tabs */
+        .tabs { 
+            display: flex; 
+            border-bottom: 1px solid #eee; 
+            margin-bottom: 25px;
+            background: white;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+        }
+        .tab { 
+            padding: 15px 25px; 
+            cursor: pointer; 
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .tab.active { 
+            border-bottom-color: var(--primary); 
+            color: var(--primary);
+            background: #f8f9fa;
+        }
+        .tab:hover { background: #f8f9fa; }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-body { padding: 30px; }
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        /* Course Cards */
+        .course-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        .course-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .course-card:hover { transform: translateY(-5px); }
+        .course-thumbnail {
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+        }
+        .course-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .course-content { padding: 25px; }
+        .course-title { 
+            font-size: 1.3rem; 
+            margin-bottom: 10px; 
+            color: #333;
+            line-height: 1.4;
+        }
+        .course-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        /* Activity List */
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .activity-icon.success { background: var(--success); }
+        .activity-icon.warning { background: var(--warning); }
+        .activity-icon.info { background: var(--info); }
+        
+        /* File Preview */
+        .file-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .file-preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .file-preview-item img,
+        .file-preview-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .file-preview-item .remove-file {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        /* Quiz Options */
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .option-item.correct {
+            border-color: var(--success);
+            background: #d4edda;
+        }
+        .option-letter {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .option-text {
+            flex: 1;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { width: 80px; }
+            .sidebar .logo h1, .sidebar .nav-item span { display: none; }
+            .sidebar .nav-item { justify-content: center; padding: 15px; }
+            .sidebar .nav-item i { margin-right: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="logo">
+            <h1>🎓 EduCMS</h1>
+            <small>Panel Admin</small>
+        </div>
+        <nav>
+            <a href="#dashboard" class="nav-item active" onclick="showSection('dashboard')">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#admins" class="nav-item" onclick="showSection('admins')">
+                <i class="fas fa-user-shield"></i>
+                <span>Admin</span>
+            </a>
+            <a href="#categories" class="nav-item" onclick="showSection('categories')">
+                <i class="fas fa-tags"></i>
+                <span>Kategori</span>
+            </a>
+            <a href="#profiles" class="nav-item" onclick="showSection('profiles')">
+                <i class="fas fa-users"></i>
+                <span>Pengguna</span>
+            </a>
+            <a href="#materi" class="nav-item" onclick="showSection('materi')">
+                <i class="fas fa-book"></i>
+                <span>Materi</span>
+            </a>
+
+            <a href="#rewards" class="nav-item" onclick="showSection('rewards')">
+                <i class="fas fa-gift"></i>
+                <span>Rewards</span>
+            </a>
+            <a href="#chat-rooms" class="nav-item" onclick="showSection('chat-rooms')">
+                <i class="fas fa-comments"></i>
+                <span>Forum Chat</span>
+            </a>
+            <a href="kuis.html" class="nav-item" onclick="showSection('quizzes')">
+                <i class="fas fa-question-circle"></i>
+                <span>Kuis</span>
+            </a>
+            <a href="#quiz-attempts" class="nav-item" onclick="showSection('quiz-attempts')">
+                <i class="fas fa-poll"></i>
+                <span>Hasil Kuis</span>
+            </a>
+            <a href="#notifications" class="nav-item" onclick="showSection('notifications')">
+                <i class="fas fa-bell"></i>
+                <span>Notifikasi</span>
+            </a>
+            <a href="#settings" class="nav-item" onclick="showSection('settings')">
+                <i class="fas fa-cog"></i>
+                <span>Pengaturan</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Top Header dengan Profile Admin -->
+        <div class="top-header">
+            <div>
+                <h2 id="page-title">Dashboard</h2>
+                <small id="page-subtitle">Ringkasan dan statistik sistem</small>
+            </div>
+            <div class="user-profile">
+                <div class="user-avatar" id="user-avatar">
+                    <!-- Avatar akan diisi oleh JavaScript -->
+                </div>
+                <div class="user-info">
+                    <h4 id="admin-name">Admin User</h4>
+                    <small id="admin-role">Super Administrator</small>
+                </div>
+                <button class="btn btn-outline" onclick="showProfileModal()">
+                    <i class="fas fa-user-cog"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="content-section active">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Kategori</h3>
+                        <div class="number" id="stat-categories">0</div>
+                        <div class="trend">+5 bulan ini</div>
+                    </div>
+                    <div class="stat-card success">
+                        <h3>Pengguna Terdaftar</h3>
+                        <div class="number" id="stat-profiles">0</div>
+                        <div class="trend">+45 minggu ini</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <h3>Total Materi</h3>
+                        <div class="number" id="stat-materi">0</div>
+                        <div class="trend">+12 hari ini</div>
+                    </div>
+                    <div class="stat-card info">
+                        <h3>Total Kuis</h3>
+                        <div class="number" id="stat-quizzes">0</div>
+                        <div class="trend">+15% dari bulan lalu</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity & Quick Actions -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+                    <!-- Aktivitas Terbaru -->
+                    <div class="content-section" style="display: block;">
+                        <div class="section-header">
+                            <h3><i class="fas fa-history"></i> Aktivitas Terbaru</h3>
+                        </div>
+                        <div class="section-body">
+                            <div class="activity-list" id="recent-activities">
+                                <!-- Aktivitas akan diisi oleh JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="content-section" style="display: block;">
+                        <div class="section-header">
+                            <h3><i class="fas fa-bolt"></i> Akses Cepat</h3>
+                        </div>
+                        <div class="section-body">
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                <button class="btn btn-primary" onclick="showSection('admins'); showAdminsModal();">
+                                    <i class="fas fa-plus"></i> Tambah Admin
+                                </button>
+                                <button class="btn btn-success" onclick="showSection('materi'); showMateriModal();">
+                                    <i class="fas fa-file-alt"></i> Tambah Materi
+                                </button>
+
+                                <button class="btn btn-info" onclick="showSection('rewards'); showRewardsModal();">
+                                    <i class="fas fa-gift"></i> Tambah Reward
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admins Section -->
+            <div id="admins" class="content-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-user-shield"></i> Manajemen Admin</h3>
+                    <button class="btn btn-primary" onclick="showAdminsModal()">
+                        <i class="fas fa-plus"></i> Tambah Admin
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Nama Lengkap</th>
+                                    <th>Email</th>
+                                    <th>Avatar</th>
+                                    <th>No. HP</th>
+                                    <th>Tanggal Daftar</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admins-table">
+                                <!-- Data admin akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Section -->
+            <div id="categories" class="content-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-tags"></i> Manajemen Kategori</h3>
+                    <button class="btn btn-primary" onclick="showCategoriesModal()">
+                        <i class="fas fa-plus"></i> Tambah Kategori
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nama Kategori</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categories-table">
+                                <!-- Data kategori akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profiles Section -->
+            <div id="profiles" class="content-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-users"></i> Manajemen Pengguna</h3>
+                </div>
+                <div class="section-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Nama Lengkap</th>
+                                    <th>Avatar</th>
+                                    <th>Points</th>
+                                    <th>Level</th>
+                                    <th>No. HP</th>
+                                    <th>Tanggal Daftar</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profiles-table">
+                                <!-- Data pengguna akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materi Section -->
+            <div id="materi" class="content-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-book"></i> Manajemen Materi</h3>
+                    <button class="btn btn-primary" onclick="showMateriModal()">
+                        <i class="fas fa-plus"></i> Tambah Materi
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Judul</th>
+                                    <th>Subtitle</th>
+                                    <th>Kategori</th>
+                                    <th>Gambar</th>
+                                    <th>Video</th>
+                                    <th>Audio</th>
+                                    <th>Likes</th>
+                                    <th>Tanggal Dibuat</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materi-table">
+                                <!-- Data materi akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+                    
+                    <!-- Daftar Pertanyaan -->
+                    <div id="questions-list" class="quiz-tab">
+                        <div class="section-header" style="margin-top: 0; padding: 20px 0; border-bottom: 1px solid #eee;">
+                            <h4>Pertanyaan Kuis</h4>
+                            <button class="btn btn-primary" onclick="showQuestionsModal()">
+                                <i class="fas fa-plus"></i> Tambah Pertanyaan
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Kuis</th>
+                                        <th>Pertanyaan</th>
+                                        <th>Urutan</th>
+                                        <th>Jumlah Opsi</th>
+                                        <th>Opsi Benar</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="questions-table">
+                                    <!-- Data pertanyaan akan diisi oleh JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Attempts Section -->
+            <div id="quiz-attempts" class="content-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-poll"></i> Hasil Kuis</h3>
+                </div>
+                <div class="section-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID Attempt</th>
+                                    <th>Pengguna</th>
+                                    <th>Kuis</th>
+                                    <th>Skor</th>
+                                    <th>Total Pertanyaan</th>
+                                    <th>Points Earned</th>
+                                    <th>Tanggal Selesai</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="quiz-attempts-table">
+                                <!-- Data hasil kuis akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rewards Section -->
+            <div id="rewards" class="content-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-gift"></i> Manajemen Rewards</h3>
+                    <button class="btn btn-primary" onclick="showRewardsModal()">
+                        <i class="fas fa-plus"></i> Tambah Reward
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Judul</th>
+                                    <th>Subtitle</th>
+                                    <th>Points Cost</th>
+                                    <th>Logo</th>
+                                    <th>Background Color</th>
+                                    <th>Button Color</th>
+                                    <th>Tipe</th>
+                                    <th>Stock</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rewards-table">
+                                <!-- Data rewards akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Rooms Section -->
+            <div id="chat-rooms" class="content-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-comments"></i> Forum Chat</h3>
+                    <button class="btn btn-primary" onclick="showChatRoomsModal()">
+                        <i class="fas fa-plus"></i> Tambah Room
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Judul</th>
+                                    <th>Deskripsi</th>
+                                    <th>Tanggal Dibuat</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="chat-rooms-table">
+                                <!-- Data chat rooms akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Section -->
+            <div id="notifications" class="content-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-bell"></i> Notifikasi</h3>
+                    <button class="btn btn-primary" onclick="showNotificationsModal()">
+                        <i class="fas fa-plus"></i> Tambah Notifikasi
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Pengguna</th>
+                                    <th>Tipe</th>
+                                    <th>Judul</th>
+                                    <th>Pesan</th>
+                                    <th>Badge Count</th>
+                                    <th>Status</th>
+                                    <th>Tanggal Dibuat</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="notifications-table">
+                                <!-- Data notifikasi akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings" class="content-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-cog"></i> Pengaturan Sistem</h3>
+                </div>
+                <div class="section-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nama Platform</label>
+                            <input type="text" class="form-control" value="EduCMS Learning Platform">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email Admin</label>
+                            <input type="email" class="form-control" value="admin@educms.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Timezone</label>
+                            <select class="form-control">
+                                <option>Asia/Jakarta (WIB)</option>
+                                <option>Asia/Makassar (WITA)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Deskripsi Platform</label>
+                        <textarea class="form-control" rows="4">Platform pembelajaran online terbaik untuk semua kalangan</textarea>
+                    </div>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-save"></i> Simpan Pengaturan
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Modal untuk Tambah/Edit Admin -->
+    <div id="admins-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="admins-modal-title">Tambah Admin Baru</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeAdminsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="admins-form">
+                    <input type="hidden" id="admins-id" name="id">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Username *</label>
+                            <input type="text" class="form-control" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nama Lengkap *</label>
+                            <input type="text" class="form-control" name="full_name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Password *</label>
+                            <input type="password" class="form-control" name="password" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nomor Telepon</label>
+                        <input type="tel" class="form-control" name="mobile_no">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Foto Profil</label>
+                        <div class="file-upload" onclick="document.getElementById('admins-avatar-upload').click()">
+                            <i class="fas fa-camera"></i>
+                            <p>Klik untuk upload foto profil</p>
+                            <small>Format: JPG, PNG, GIF (Max 2MB)</small>
+                            <img id="admins-avatar-preview" class="preview-image" alt="Preview">
+                        </div>
+                        <input type="file" id="admins-avatar-upload" class="file-input" accept="image/*" onchange="previewImage(this, 'admins-avatar-preview')">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveAdmins()">
+                    <i class="fas fa-save"></i> Simpan Admin
+                </button>
+                <button class="btn btn-outline" onclick="closeAdminsModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk Tambah/Edit Kategori -->
+    <div id="categories-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="categories-modal-title">Tambah Kategori Baru</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeCategoriesModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="categories-form">
+                    <input type="hidden" id="categories-id" name="id">
+                    <div class="form-group">
+                        <label class="form-label">Nama Kategori *</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveCategories()">
+                    <i class="fas fa-save"></i> Simpan Kategori
+                </button>
+                <button class="btn btn-outline" onclick="closeCategoriesModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk Tambah/Edit Materi -->
+    <div id="materi-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="materi-modal-title">Tambah Materi Baru</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeMateriModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="materi-form">
+                    <input type="hidden" id="materi-id" name="id">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Judul Materi *</label>
+                            <input type="text" class="form-control" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Kategori *</label>
+                            <select class="form-control" name="category_id" required>
+                                <option value="">Pilih Kategori</option>
+                                <!-- Options akan diisi oleh JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Subtitle</label>
+                        <input type="text" class="form-control" name="subtitle">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Summary</label>
+                        <textarea class="form-control" name="summary" rows="4"></textarea>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Gambar Materi</label>
+                            <div class="file-upload" onclick="document.getElementById('materi-image-upload').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Klik untuk upload gambar materi</p>
+                                <small>Format: JPG, PNG, GIF (Max 2MB)</small>
+                                <img id="materi-image-preview" class="preview-image" alt="Preview">
+                            </div>
+                            <input type="file" id="materi-image-upload" class="file-input" accept="image/*" onchange="previewImage(this, 'materi-image-preview')">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Video Materi</label>
+                            <div class="file-upload" onclick="document.getElementById('materi-video-upload').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Klik untuk upload video materi</p>
+                                <small>Format: MP4, MOV (Max 50MB)</small>
+                                <video id="materi-video-preview" class="preview-video" controls style="display: none;"></video>
+                            </div>
+                            <input type="file" id="materi-video-upload" class="file-input" accept="video/*" onchange="previewVideo(this, 'materi-video-preview')">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Audio Materi</label>
+                        <div class="file-upload" onclick="document.getElementById('materi-audio-upload').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Klik untuk upload audio materi</p>
+                            <small>Format: MP3, WAV (Max 10MB)</small>
+                        </div>
+                        <input type="file" id="materi-audio-upload" class="file-input" accept="audio/*">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveMateri()">
+                    <i class="fas fa-save"></i> Simpan Materi
+                </button>
+                <button class="btn btn-outline" onclick="closeMateriModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Modal untuk Tambah/Edit Pertanyaan -->
+    <div id="questions-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="questions-modal-title">Tambah Pertanyaan Baru</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeQuestionsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="questions-form">
+                    <input type="hidden" id="questions-id" name="id">
+                    <div class="form-group">
+                        <label class="form-label">Kuis *</label>
+                        <select class="form-control" name="quiz_id" required onchange="updateQuestionCount()">
+                            <option value="">Pilih Kuis</option>
+                            <!-- Options akan diisi oleh JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Pertanyaan *</label>
+                        <textarea class="form-control" name="question_text" rows="3" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Urutan Pertanyaan</label>
+                        <input type="number" class="form-control" name="order_index" min="1" value="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Opsi Jawaban</label>
+                        <div class="quiz-options" id="quiz-options-container">
+                            <!-- Opsi akan diisi oleh JavaScript -->
+                        </div>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="addOption()" style="margin-top: 10px;">
+                            <i class="fas fa-plus"></i> Tambah Opsi
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveQuestions()">
+                    <i class="fas fa-save"></i> Simpan Pertanyaan
+                </button>
+                <button class="btn btn-outline" onclick="closeQuestionsModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk Tambah/Edit Rewards -->
+    <div id="rewards-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="rewards-modal-title">Tambah Reward Baru</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeRewardsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="rewards-form">
+                    <input type="hidden" id="rewards-id" name="id">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Judul *</label>
+                            <input type="text" class="form-control" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Subtitle *</label>
+                            <input type="text" class="form-control" name="subtitle" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Points Cost *</label>
+                            <input type="number" class="form-control" name="points_cost" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Stock *</label>
+                            <input type="number" class="form-control" name="stock" required min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Background Color</label>
+                            <input type="color" class="form-control" name="bg_color" value="#EEEEEE">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Button Color</label>
+                            <input type="color" class="form-control" name="button_color" value="#AAAAAA">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Tipe</label>
+                        <select class="form-control" name="type">
+                            <option value="daily_deal">Daily Deal</option>
+                            <option value="special">Special</option>
+                            <option value="limited">Limited</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Logo Reward</label>
+                        <div class="file-upload" onclick="document.getElementById('rewards-logo-upload').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Klik untuk upload logo reward</p>
+                            <small>Format: JPG, PNG, GIF (Max 2MB)</small>
+                            <img id="rewards-logo-preview" class="preview-image" alt="Preview">
+                        </div>
+                        <input type="file" id="rewards-logo-upload" class="file-input" accept="image/*" onchange="previewImage(this, 'rewards-logo-preview')">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveRewards()">
+                    <i class="fas fa-save"></i> Simpan Reward
+                </button>
+                <button class="btn btn-outline" onclick="closeRewardsModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk Tambah/Edit Chat Rooms -->
+    <div id="chat-rooms-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="chat-rooms-modal-title">Tambah Room Chat Baru</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeChatRoomsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="chat-rooms-form">
+                    <input type="hidden" id="chat-rooms-id" name="id">
+                    <div class="form-group">
+                        <label class="form-label">Judul Room *</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Deskripsi</label>
+                        <textarea class="form-control" name="description" rows="4"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveChatRooms()">
+                    <i class="fas fa-save"></i> Simpan Room
+                </button>
+                <button class="btn btn-outline" onclick="closeChatRoomsModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk Tambah/Edit Notifications -->
+    <div id="notifications-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="notifications-modal-title">Tambah Notifikasi Baru</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeNotificationsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="notifications-form">
+                    <input type="hidden" id="notifications-id" name="id">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Pengguna *</label>
+                            <select class="form-control" name="user_id" required>
+                                <option value="">Pilih Pengguna</option>
+                                <!-- Options akan diisi oleh JavaScript -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tipe</label>
+                            <select class="form-control" name="type">
+                                <option value="info">Info</option>
+                                <option value="warning">Warning</option>
+                                <option value="success">Success</option>
+                                <option value="error">Error</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Judul *</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Pesan</label>
+                        <textarea class="form-control" name="message" rows="4"></textarea>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Badge Count</label>
+                            <input type="number" class="form-control" name="badge_count" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select class="form-control" name="is_read">
+                                <option value="false">Belum Dibaca</option>
+                                <option value="true">Sudah Dibaca</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveNotifications()">
+                    <i class="fas fa-save"></i> Simpan Notifikasi
+                </button>
+                <button class="btn btn-outline" onclick="closeNotificationsModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Profile Admin -->
+    <div id="profile-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Profil Admin</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeProfileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="profile-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nama Lengkap *</label>
+                            <input type="text" class="form-control" name="full_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" name="email" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Foto Profil</label>
+                        <div class="file-upload" onclick="document.getElementById('avatar-upload').click()">
+                            <i class="fas fa-camera"></i>
+                            <p>Klik untuk upload foto profil</p>
+                            <img id="avatar-preview" class="preview-image" alt="Preview Avatar">
+                        </div>
+                        <input type="file" id="avatar-upload" class="file-input" accept="image/*" onchange="previewImage(this, 'avatar-preview')">
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nomor Telepon</label>
+                            <input type="tel" class="form-control" name="phone">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Peran</label>
+                            <select class="form-control" name="role" disabled>
+                                <option value="admin">Administrator</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveProfile()">
+                    <i class="fas fa-save"></i> Simpan Perubahan
+                </button>
+                <button class="btn btn-outline" onclick="closeProfileModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Konfirmasi Hapus</h3>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message">Apakah Anda yakin ingin menghapus item ini?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="confirm-delete-btn">
+                    <i class="fas fa-trash"></i> Ya, Hapus
+                </button>
+                <button class="btn btn-outline" onclick="closeConfirmModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Sample sesuai Database Schema
+        let adminData = {
+            id: "550e8400-e29b-41d4-a716-446655440000",
+            username: "admin",
+            full_name: "Ahmad Wijaya",
+            email: "ahmad@example.com",
+            avatar_url: null,
+            mobile_no: "+628123456789",
+            created_at: "2024-01-01"
+        };
+
+        let admins = [];
+        let categories = [];
+        let profiles = [];
+        let materi = [];
+        let quizzes = [];
+        let questions = [];
+        let options = [];
+        let quiz_attempts = [];
+        let rewards = [];
+        let chat_rooms = [];
+        let messages = [];
+        let notifications = [];
+        let user_favorites = [];
+
+        let currentEditingItem = null;
+        let currentEditingType = null;
+        let optionCounter = 0;
+
+        // Inisialisasi data sample
+        function initializeSampleData() {
+            admins = [
+                { 
+                    id: "550e8400-e29b-41d4-a716-446655440000", 
+                    username: "admin", 
+                    full_name: "Ahmad Wijaya", 
+                    email: "ahmad@example.com", 
+                    avatar_url: null, 
+                    mobile_no: "+628123456789", 
+                    created_at: "2024-01-01" 
+                },
+                { 
+                    id: "550e8400-e29b-41d4-a716-446655440003", 
+                    username: "siti", 
+                    full_name: "Siti Rahayu", 
+                    email: "siti@example.com", 
+                    avatar_url: null, 
+                    mobile_no: "+628123456786", 
+                    created_at: "2024-01-15" 
+                }
+            ];
+
+            categories = [
+                { id: 1, name: "Matematika" },
+                { id: 2, name: "Bahasa Inggris" },
+                { id: 3, name: "Pemrograman" },
+                { id: 4, name: "Sains" }
+            ];
+
+            profiles = [
+                { id: "550e8400-e29b-41d4-a716-446655440001", username: "sari", full_name: "Sari Dewi", avatar_url: null, points: 1500, level: 5, mobile_no: "+628123456788", dob: "1992-08-20", upi_id: "sari@upi", created_at: "2024-01-05" },
+                { id: "550e8400-e29b-41d4-a716-446655440002", username: "budi", full_name: "Budi Santoso", avatar_url: null, points: 800, level: 3, mobile_no: "+628123456787", dob: "1991-03-10", upi_id: "budi@upi", created_at: "2024-01-10" }
+            ];
+
+            materi = [
+                { id: 1, category_id: 1, title: "Pengenalan Aljabar", subtitle: "Dasar-dasar aljabar", image_url: null, video_thumbnail_url: null, video_url: null, summary: "Materi pengenalan aljabar untuk pemula", audio_url: null, likes: 25, created_at: "2024-02-15" },
+                { id: 2, category_id: 2, title: "Grammar Basics", subtitle: "Tata bahasa Inggris dasar", image_url: null, video_thumbnail_url: null, video_url: null, summary: "Belajar tata bahasa Inggris dasar", audio_url: null, likes: 18, created_at: "2024-02-16" }
+            ];
+
+            quizzes = [
+                { 
+                    id: 1, 
+                    title: "Kuis Matematika Dasar", 
+                    image_url: null, 
+                    question_count: 3, 
+                    duration: "30 menit", 
+                    rating: 4.5, 
+                    created_at: "2024-02-20" 
+                },
+                { 
+                    id: 2, 
+                    title: "Kuis Bahasa Inggris", 
+                    image_url: null, 
+                    question_count: 2, 
+                    duration: "45 menit", 
+                    rating: 4.2, 
+                    created_at: "2024-02-21" 
+                }
+            ];
+
+            quizzes = [
+                { id: 1, title: "Kuis Matematika Dasar", image_url: null, question_count: 3, duration: "30 menit", rating: 4.5, created_at: "2024-02-20" },
+                { id: 2, title: "Kuis Bahasa Inggris", image_url: null, question_count: 2, duration: "45 menit", rating: 4.2, created_at: "2024-02-21" }
+            ];
+
+            questions = [
+                { id: 1, quiz_id: 1, question_text: "Berapakah hasil dari 2 + 2?", order_index: 1 },
+                { id: 2, quiz_id: 1, question_text: "Apa hasil dari 5 × 3?", order_index: 2 },
+                { id: 3, quiz_id: 1, question_text: "Berapakah nilai dari 10 ÷ 2?", order_index: 3 },
+                { id: 4, quiz_id: 2, question_text: "What is the capital of Indonesia?", order_index: 1 },
+                { id: 5, quiz_id: 2, question_text: "How do you say 'Terima kasih' in English?", order_index: 2 }
+            ];
+
+            options = [
+                // Question 1 options
+                { id: 1, question_id: 1, option_text: "3", is_correct: false },
+                { id: 2, question_id: 1, option_text: "4", is_correct: true },
+                { id: 3, question_id: 1, option_text: "5", is_correct: false },
+                { id: 4, question_id: 1, option_text: "6", is_correct: false },
+                
+                // Question 2 options
+                { id: 5, question_id: 2, option_text: "15", is_correct: true },
+                { id: 6, question_id: 2, option_text: "8", is_correct: false },
+                { id: 7, question_id: 2, option_text: "10", is_correct: false },
+                { id: 8, question_id: 2, option_text: "12", is_correct: false },
+                
+                // Question 3 options
+                { id: 9, question_id: 3, option_text: "3", is_correct: false },
+                { id: 10, question_id: 3, option_text: "4", is_correct: false },
+                { id: 11, question_id: 3, option_text: "5", is_correct: true },
+                { id: 12, question_id: 3, option_text: "6", is_correct: false },
+                
+                // Question 4 options
+                { id: 13, question_id: 4, option_text: "Jakarta", is_correct: true },
+                { id: 14, question_id: 4, option_text: "Bangkok", is_correct: false },
+                { id: 15, question_id: 4, option_text: "Kuala Lumpur", is_correct: false },
+                { id: 16, question_id: 4, option_text: "Singapore", is_correct: false },
+                
+                // Question 5 options
+                { id: 17, question_id: 5, option_text: "Thank you", is_correct: true },
+                { id: 18, question_id: 5, option_text: "Hello", is_correct: false },
+                { id: 19, question_id: 5, option_text: "Goodbye", is_correct: false },
+                { id: 20, question_id: 5, option_text: "Please", is_correct: false }
+            ];
+
+            quiz_attempts = [
+                { id: "660e8400-e29b-41d4-a716-446655440000", user_id: "550e8400-e29b-41d4-a716-446655440001", quiz_id: 1, score: 8, total_questions: 10, points_earned: 80, completed_at: "2024-02-25" }
+            ];
+
+            rewards = [
+                { id: 1, title: "Voucher Belanja", subtitle: "Diskon 50%", points_cost: 500, logo_url: null, bg_color: "#FFEAA7", button_color: "#FDCB6E", type: "daily_deal", stock: 10 }
+            ];
+
+            chat_rooms = [
+                { id: 1, title: "Diskusi Matematika", description: "Room untuk diskusi soal matematika", created_at: "2024-02-22" }
+            ];
+
+            notifications = [
+                { id: 1, user_id: "550e8400-e29b-41d4-a716-446655440001", type: "info", title: "Materi Baru", message: "Materi matematika baru telah tersedia", badge_count: 1, is_read: false, created_at: "2024-02-24" }
+            ];
+
+            updateDashboardStats();
+            renderAdminsTable();
+            renderCategoriesTable();
+            renderProfilesTable();
+            renderMateriTable();
+            renderQuizzesTable();
+            renderQuestionsTable();
+            renderQuizAttemptsTable();
+            renderRewardsTable();
+            renderChatRoomsTable();
+            renderNotificationsTable();
+            renderRecentActivities();
+            updateUserProfile();
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats() {
+            document.getElementById('stat-categories').textContent = categories.length;
+            document.getElementById('stat-profiles').textContent = profiles.length;
+            document.getElementById('stat-materi').textContent = materi.length;
+            document.getElementById('stat-quizzes').textContent = quizzes.length;
+            document.getElementById('stat-quizzes').textContent = quizzes.length;
+        }
+
+        // Render admins table
+        function renderAdminsTable() {
+            const tbody = document.getElementById('admins-table');
+            tbody.innerHTML = '';
+            
+            admins.forEach(a => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${a.username}</td>
+                    <td>${a.full_name}</td>
+                    <td>${a.email}</td>
+                    <td>
+                        ${a.avatar_url ? 
+                            `<img src="${a.avatar_url}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">` :
+                            `<div style="width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">${a.full_name.charAt(0)}</div>`
+                        }
+                    </td>
+                    <td>${a.mobile_no || '-'}</td>
+                    <td>${formatDate(a.created_at)}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editAdmins('${a.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${a.id !== adminData.id ? `
+                            <button class="btn btn-danger btn-sm" onclick="confirmDelete('admins', '${a.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render categories table
+        function renderCategoriesTable() {
+            const tbody = document.getElementById('categories-table');
+            tbody.innerHTML = '';
+            
+            categories.forEach(c => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${c.id}</td>
+                    <td>${c.name}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editCategories(${c.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete('categories', ${c.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render profiles table
+        function renderProfilesTable() {
+            const tbody = document.getElementById('profiles-table');
+            tbody.innerHTML = '';
+            
+            profiles.forEach(p => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${p.username}</td>
+                    <td>${p.full_name}</td>
+                    <td>
+                        ${p.avatar_url ? 
+                            `<img src="${p.avatar_url}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">` :
+                            `<div style="width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">${p.full_name.charAt(0)}</div>`
+                        }
+                    </td>
+                    <td>${p.points}</td>
+                    <td>${p.level}</td>
+                    <td>${p.mobile_no || '-'}</td>
+                    <td>${formatDate(p.created_at)}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editProfiles('${p.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete('profiles', '${p.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render materi table
+        function renderMateriTable() {
+            const tbody = document.getElementById('materi-table');
+            tbody.innerHTML = '';
+            
+            materi.forEach(m => {
+                const category = categories.find(c => c.id === m.category_id) || { name: 'Tidak diketahui' };
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${m.title}</td>
+                    <td>${m.subtitle || '-'}</td>
+                    <td>${category.name}</td>
+                    <td>${m.image_url ? '<i class="fas fa-image text-success"></i>' : '-'}</td>
+                    <td>${m.video_url ? '<i class="fas fa-video text-success"></i>' : '-'}</td>
+                    <td>${m.audio_url ? '<i class="fas fa-volume-up text-success"></i>' : '-'}</td>
+                    <td>${m.likes}</td>
+                    <td>${formatDate(m.created_at)}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editMateri(${m.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete('materi', ${m.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render quizzes table
+
+
+        // Render questions table
+        function renderQuestionsTable() {
+            const tbody = document.getElementById('questions-table');
+            tbody.innerHTML = '';
+            
+            questions.forEach(q => {
+                const quiz = quizzes.find(qu => qu.id === q.quiz_id) || { title: 'Tidak diketahui' };
+                const questionOptions = options.filter(o => o.question_id === q.id);
+                const correctOption = questionOptions.find(o => o.is_correct);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${quiz.title}</td>
+                    <td>${q.question_text.length > 50 ? q.question_text.substring(0, 50) + '...' : q.question_text}</td>
+                    <td>${q.order_index}</td>
+                    <td>${questionOptions.length}</td>
+                    <td>${correctOption ? correctOption.option_text.substring(0, 20) + '...' : '-'}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editQuestions(${q.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete('questions', ${q.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render quiz attempts table
+        function renderQuizAttemptsTable() {
+            const tbody = document.getElementById('quiz-attempts-table');
+            tbody.innerHTML = '';
+            
+            quiz_attempts.forEach(qa => {
+                const user = profiles.find(p => p.id === qa.user_id) || { full_name: 'Tidak diketahui' };
+                const quiz = quizzes.find(q => q.id === qa.quiz_id) || { title: 'Tidak diketahui' };
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${qa.id.substring(0, 8)}...</td>
+                    <td>${user.full_name}</td>
+                    <td>${quiz.title}</td>
+                    <td>${qa.score}/${qa.total_questions}</td>
+                    <td>${qa.total_questions}</td>
+                    <td>${qa.points_earned}</td>
+                    <td>${formatDate(qa.completed_at)}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="viewQuizAttemptDetails('${qa.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete('quiz_attempts', '${qa.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render rewards table
+        function renderRewardsTable() {
+            const tbody = document.getElementById('rewards-table');
+            tbody.innerHTML = '';
+            
+            rewards.forEach(r => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${r.title}</td>
+                    <td>${r.subtitle}</td>
+                    <td>${r.points_cost}</td>
+                    <td>${r.logo_url ? '<i class="fas fa-image text-success"></i>' : '-'}</td>
+                    <td><div style="width: 20px; height: 20px; background: ${r.bg_color}; border-radius: 4px;"></div></td>
+                    <td><div style="width: 20px; height: 20px; background: ${r.button_color}; border-radius: 4px;"></div></td>
+                    <td><span class="badge badge-primary">${r.type}</span></td>
+                    <td>${r.stock}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editRewards(${r.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete('rewards', ${r.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render chat rooms table
+        function renderChatRoomsTable() {
+            const tbody = document.getElementById('chat-rooms-table');
+            tbody.innerHTML = '';
+            
+            chat_rooms.forEach(cr => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${cr.title}</td>
+                    <td>${cr.description || '-'}</td>
+                    <td>${formatDate(cr.created_at)}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editChatRooms(${cr.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete('chat_rooms', ${cr.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render notifications table
+        function renderNotificationsTable() {
+            const tbody = document.getElementById('notifications-table');
+            tbody.innerHTML = '';
+            
+            notifications.forEach(n => {
+                const user = profiles.find(p => p.id === n.user_id) || { full_name: 'Tidak diketahui' };
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.full_name}</td>
+                    <td><span class="badge badge-${n.type === 'info' ? 'info' : n.type === 'warning' ? 'warning' : n.type === 'success' ? 'success' : 'danger'}">${n.type}</span></td>
+                    <td>${n.title}</td>
+                    <td>${n.message || '-'}</td>
+                    <td>${n.badge_count}</td>
+                    <td><span class="badge ${n.is_read ? 'badge-success' : 'badge-warning'}">${n.is_read ? 'Dibaca' : 'Belum Dibaca'}</span></td>
+                    <td>${formatDate(n.created_at)}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editNotifications(${n.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete('notifications', ${n.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render recent activities
+        function renderRecentActivities() {
+            const container = document.getElementById('recent-activities');
+            container.innerHTML = '';
+            
+            const activities = [
+                { type: 'success', icon: 'fas fa-user-plus', text: 'Pengguna baru mendaftar: Sari Dewi', time: '5 menit lalu' },
+                { type: 'warning', icon: 'fas fa-question-circle', text: 'Kuis baru ditambahkan: Matematika Dasar', time: '1 jam lalu' },
+                { type: 'info', icon: 'fas fa-book', text: 'Materi baru diupload: Pengenalan Aljabar', time: '2 jam lalu' },
+                { type: 'success', icon: 'fas fa-poll', text: '3 kuis telah diselesaikan', time: '3 jam lalu' },
+                { type: 'info', icon: 'fas fa-gift', text: 'Reward baru ditambahkan: Voucher Belanja', time: '5 jam lalu' }
+            ];
+            
+            activities.forEach(activity => {
+                const item = document.createElement('div');
+                item.className = 'activity-item';
+                item.innerHTML = `
+                    <div class="activity-icon ${activity.type}">
+                        <i class="${activity.icon}"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin: 0; font-weight: 500;">${activity.text}</p>
+                        <small style="color: #666;">${activity.time}</small>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Update user profile
+        function updateUserProfile() {
+            document.getElementById('admin-name').textContent = adminData.full_name;
+            document.getElementById('admin-role').textContent = 'Administrator';
+            
+            const avatar = document.getElementById('user-avatar');
+            if (adminData.avatar_url) {
+                avatar.style.backgroundImage = `url(${adminData.avatar_url})`;
+                avatar.style.backgroundSize = 'cover';
+                avatar.innerHTML = '';
+            } else {
+                avatar.innerHTML = adminData.full_name.charAt(0);
+            }
+        }
+
+        // Show section
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[href="#${sectionId}"]`).classList.add('active');
+            
+            // Update page title
+            const titles = {
+                'dashboard': 'Dashboard',
+                'admins': 'Manajemen Admin',
+                'categories': 'Manajemen Kategori',
+                'profiles': 'Manajemen Pengguna',
+                'materi': 'Manajemen Materi',
+                'quizzes': 'Manajemen Kuis',
+                'quiz-attempts': 'Hasil Kuis',
+                'rewards': 'Manajemen Rewards',
+                'chat-rooms': 'Forum Chat',
+                'notifications': 'Notifikasi',
+                'settings': 'Pengaturan Sistem'
+            };
+            
+            const subtitles = {
+                'dashboard': 'Ringkasan dan statistik sistem',
+                'admins': 'Kelola data administrator',
+                'categories': 'Kelola kategori materi',
+                'profiles': 'Kelola data pengguna',
+                'materi': 'Kelola materi pembelajaran',
+                'quizzes': 'Kelola kuis dan pertanyaan',
+                'quiz-attempts': 'Lihat hasil kuis pengguna',
+                'rewards': 'Kelola rewards dan hadiah',
+                'chat-rooms': 'Kelola room diskusi',
+                'notifications': 'Kelola notifikasi pengguna',
+                'settings': 'Pengaturan platform'
+            };
+            
+            document.getElementById('page-title').textContent = titles[sectionId];
+            document.getElementById('page-subtitle').textContent = subtitles[sectionId];
+        }
+
+        // Show quiz tab
+        function showQuizTab(tabId) {
+            // Hide all quiz tabs
+            document.querySelectorAll('.quiz-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // ========== ADMINS FUNCTIONS ==========
+        function showAdminsModal() {
+            document.getElementById('admins-modal-title').textContent = 'Tambah Admin Baru';
+            document.getElementById('admins-form').reset();
+            document.getElementById('admins-id').value = '';
+            document.getElementById('admins-avatar-preview').style.display = 'none';
+            currentEditingItem = null;
+            currentEditingType = 'admins';
+            
+            document.getElementById('admins-modal').style.display = 'flex';
+        }
+
+        function closeAdminsModal() {
+            document.getElementById('admins-modal').style.display = 'none';
+        }
+
+        function editAdmins(id) {
+            const adminsData = admins.find(a => a.id === id);
+            if (!adminsData) return;
+            
+            document.getElementById('admins-modal-title').textContent = 'Edit Admin';
+            document.getElementById('admins-id').value = adminsData.id;
+            document.querySelector('#admins-form input[name="username"]').value = adminsData.username;
+            document.querySelector('#admins-form input[name="full_name"]').value = adminsData.full_name;
+            document.querySelector('#admins-form input[name="email"]').value = adminsData.email;
+            document.querySelector('#admins-form input[name="mobile_no"]').value = adminsData.mobile_no || '';
+            document.querySelector('#admins-form input[name="password"]').value = '';
+            
+            if (adminsData.avatar_url) {
+                document.getElementById('admins-avatar-preview').src = adminsData.avatar_url;
+                document.getElementById('admins-avatar-preview').style.display = 'block';
+            }
+            
+            currentEditingItem = adminsData;
+            currentEditingType = 'admins';
+            document.getElementById('admins-modal').style.display = 'flex';
+        }
+
+        function saveAdmins() {
+            const form = document.getElementById('admins-form');
+            const formData = new FormData(form);
+            const avatarFile = document.getElementById('admins-avatar-upload').files[0];
+            
+            const saveAdminsData = (avatarUrl = null) => {
+                const adminsData = {
+                    username: formData.get('username'),
+                    full_name: formData.get('full_name'),
+                    email: formData.get('email'),
+                    mobile_no: formData.get('mobile_no'),
+                    avatar_url: avatarUrl,
+                    created_at: new Date().toISOString()
+                };
+                
+                if (currentEditingItem) {
+                    // Update existing admins
+                    const index = admins.findIndex(a => a.id === currentEditingItem.id);
+                    admins[index] = { ...admins[index], ...adminsData };
+                } else {
+                    // Add new admins
+                    adminsData.id = 'admin-' + Date.now();
+                    admins.push(adminsData);
+                }
+                
+                renderAdminsTable();
+                closeAdminsModal();
+                showNotification('Admin berhasil disimpan!', 'success');
+            };
+            
+            if (avatarFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveAdminsData(e.target.result);
+                };
+                reader.readAsDataURL(avatarFile);
+            } else if (currentEditingItem && currentEditingItem.avatar_url) {
+                saveAdminsData(currentEditingItem.avatar_url);
+            } else {
+                saveAdminsData();
+            }
+        }
+
+        // ========== CATEGORIES FUNCTIONS ==========
+        function showCategoriesModal() {
+            document.getElementById('categories-modal-title').textContent = 'Tambah Kategori Baru';
+            document.getElementById('categories-form').reset();
+            document.getElementById('categories-id').value = '';
+            currentEditingItem = null;
+            currentEditingType = 'categories';
+            
+            document.getElementById('categories-modal').style.display = 'flex';
+        }
+
+        function closeCategoriesModal() {
+            document.getElementById('categories-modal').style.display = 'none';
+        }
+
+        function editCategories(id) {
+            const categoriesData = categories.find(c => c.id === id);
+            if (!categoriesData) return;
+            
+            document.getElementById('categories-modal-title').textContent = 'Edit Kategori';
+            document.getElementById('categories-id').value = categoriesData.id;
+            document.querySelector('#categories-form input[name="name"]').value = categoriesData.name;
+            
+            currentEditingItem = categoriesData;
+            currentEditingType = 'categories';
+            document.getElementById('categories-modal').style.display = 'flex';
+        }
+
+        function saveCategories() {
+            const form = document.getElementById('categories-form');
+            const formData = new FormData(form);
+            
+            const categoriesData = {
+                name: formData.get('name')
+            };
+            
+            if (currentEditingItem) {
+                // Update existing categories
+                const index = categories.findIndex(c => c.id === currentEditingItem.id);
+                categories[index] = { ...categories[index], ...categoriesData };
+            } else {
+                // Add new categories
+                categoriesData.id = categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1;
+                categories.push(categoriesData);
+            }
+            
+            renderCategoriesTable();
+            updateDashboardStats();
+            closeCategoriesModal();
+            showNotification('Kategori berhasil disimpan!', 'success');
+        }
+
+        // ========== MATERI FUNCTIONS ==========
+        function showMateriModal() {
+            document.getElementById('materi-modal-title').textContent = 'Tambah Materi Baru';
+            document.getElementById('materi-form').reset();
+            document.getElementById('materi-id').value = '';
+            document.getElementById('materi-image-preview').style.display = 'none';
+            document.getElementById('materi-video-preview').style.display = 'none';
+            currentEditingItem = null;
+            currentEditingType = 'materi';
+            
+            // Populate categories dropdown
+            const categoriesSelect = document.querySelector('#materi-form select[name="category_id"]');
+            categoriesSelect.innerHTML = '<option value="">Pilih Kategori</option>';
+            categories.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.id;
+                option.textContent = c.name;
+                categoriesSelect.appendChild(option);
+            });
+            
+            document.getElementById('materi-modal').style.display = 'flex';
+        }
+
+        function closeMateriModal() {
+            document.getElementById('materi-modal').style.display = 'none';
+        }
+
+        function editMateri(id) {
+            const materiData = materi.find(m => m.id === id);
+            if (!materiData) return;
+            
+            document.getElementById('materi-modal-title').textContent = 'Edit Materi';
+            document.getElementById('materi-id').value = materiData.id;
+            document.querySelector('#materi-form input[name="title"]').value = materiData.title;
+            document.querySelector('#materi-form input[name="subtitle"]').value = materiData.subtitle || '';
+            document.querySelector('#materi-form textarea[name="summary"]').value = materiData.summary || '';
+            document.querySelector('#materi-form select[name="category_id"]').value = materiData.category_id;
+            
+            if (materiData.image_url) {
+                document.getElementById('materi-image-preview').src = materiData.image_url;
+                document.getElementById('materi-image-preview').style.display = 'block';
+            }
+            
+            if (materiData.video_url) {
+                document.getElementById('materi-video-preview').src = materiData.video_url;
+                document.getElementById('materi-video-preview').style.display = 'block';
+            }
+            
+            currentEditingItem = materiData;
+            currentEditingType = 'materi';
+            document.getElementById('materi-modal').style.display = 'flex';
+        }
+
+        function saveMateri() {
+            const form = document.getElementById('materi-form');
+            const formData = new FormData(form);
+            const imageFile = document.getElementById('materi-image-upload').files[0];
+            const videoFile = document.getElementById('materi-video-upload').files[0];
+            const audioFile = document.getElementById('materi-audio-upload').files[0];
+            
+            const saveMateriData = (imageUrl = null, videoUrl = null, audioUrl = null) => {
+                const materiData = {
+                    title: formData.get('title'),
+                    subtitle: formData.get('subtitle'),
+                    category_id: parseInt(formData.get('category_id')),
+                    summary: formData.get('summary'),
+                    image_url: imageUrl,
+                    video_url: videoUrl,
+                    audio_url: audioUrl,
+                    likes: 0,
+                    created_at: new Date().toISOString()
+                };
+                
+                if (currentEditingItem) {
+                    // Update existing materi
+                    const index = materi.findIndex(m => m.id === currentEditingItem.id);
+                    materi[index] = { ...materi[index], ...materiData };
+                } else {
+                    // Add new materi
+                    materiData.id = materi.length > 0 ? Math.max(...materi.map(m => m.id)) + 1 : 1;
+                    materi.push(materiData);
+                }
+                
+                renderMateriTable();
+                updateDashboardStats();
+                closeMateriModal();
+                showNotification('Materi berhasil disimpan!', 'success');
+            };
+            
+            // Handle file uploads
+            let imageUploaded = false;
+            let videoUploaded = false;
+            let audioUploaded = false;
+            
+            if (imageFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveMateriData(e.target.result, null, null);
+                };
+                reader.readAsDataURL(imageFile);
+                imageUploaded = true;
+            }
+            
+            if (videoFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveMateriData(null, e.target.result, null);
+                };
+                reader.readAsDataURL(videoFile);
+                videoUploaded = true;
+            }
+            
+            if (audioFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveMateriData(null, null, e.target.result);
+                };
+                reader.readAsDataURL(audioFile);
+                audioUploaded = true;
+            }
+            
+            if (!imageUploaded && !videoUploaded && !audioUploaded) {
+                if (currentEditingItem) {
+                    saveMateriData(
+                        currentEditingItem.image_url,
+                        currentEditingItem.video_url,
+                        currentEditingItem.audio_url
+                    );
+                } else {
+                    saveMateriData();
+                }
+            }
+        }
+
+        // ========== QUIZZES FUNCTIONS ==========
+        function showQuizzesModal() {
+            document.getElementById('quizzes-modal-title').textContent = 'Tambah Kuis Baru';
+            document.getElementById('quizzes-form').reset();
+            document.getElementById('quizzes-id').value = '';
+            document.getElementById('quizzes-image-preview').style.display = 'none';
+            currentEditingItem = null;
+            currentEditingType = 'quizzes';
+            
+            document.getElementById('quizzes-modal').style.display = 'flex';
+        }
+
+        function closeQuizzesModal() {
+            document.getElementById('quizzes-modal').style.display = 'none';
+        }
+
+        function editQuizzes(id) {
+            const quizzesData = quizzes.find(q => q.id === id);
+            if (!quizzesData) return;
+            
+            document.getElementById('quizzes-modal-title').textContent = 'Edit Kuis';
+            document.getElementById('quizzes-id').value = quizzesData.id;
+            document.querySelector('#quizzes-form input[name="title"]').value = quizzesData.title;
+            document.querySelector('#quizzes-form input[name="duration"]').value = quizzesData.duration || '';
+            
+            if (quizzesData.image_url) {
+                document.getElementById('quizzes-image-preview').src = quizzesData.image_url;
+                document.getElementById('quizzes-image-preview').style.display = 'block';
+            }
+            
+            currentEditingItem = quizzesData;
+            currentEditingType = 'quizzes';
+            document.getElementById('quizzes-modal').style.display = 'flex';
+        }
+
+        function saveQuizzes() {
+            const form = document.getElementById('quizzes-form');
+            const formData = new FormData(form);
+            const imageFile = document.getElementById('quizzes-image-upload').files[0];
+            
+            const saveQuizzesData = (imageUrl = null) => {
+                const quizzesData = {
+                    title: formData.get('title'),
+                    duration: formData.get('duration'),
+                    image_url: imageUrl,
+                    question_count: 0,
+                    rating: 0.0,
+                    created_at: new Date().toISOString()
+                };
+                
+                if (currentEditingItem) {
+                    // Update existing quizzes
+                    const index = quizzes.findIndex(q => q.id === currentEditingItem.id);
+                    quizzes[index] = { ...quizzes[index], ...quizzesData };
+                } else {
+                    // Add new quizzes
+                    quizzesData.id = quizzes.length > 0 ? Math.max(...quizzes.map(q => q.id)) + 1 : 1;
+                    quizzes.push(quizzesData);
+                }
+                
+                renderQuizzesTable();
+                updateDashboardStats();
+                closeQuizzesModal();
+                showNotification('Kuis berhasil disimpan!', 'success');
+            };
+            
+            if (imageFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveQuizzesData(e.target.result);
+                };
+                reader.readAsDataURL(imageFile);
+            } else if (currentEditingItem && currentEditingItem.image_url) {
+                saveQuizzesData(currentEditingItem.image_url);
+            } else {
+                saveQuizzesData();
+            }
+        }
+
+        // ========== QUESTIONS FUNCTIONS ==========
+        function showQuestionsModal() {
+            document.getElementById('questions-modal-title').textContent = 'Tambah Pertanyaan Baru';
+            document.getElementById('questions-form').reset();
+            document.getElementById('questions-id').value = '';
+            optionCounter = 0;
+            currentEditingItem = null;
+            currentEditingType = 'questions';
+            
+            // Populate quizzes dropdown
+            const quizzesSelect = document.querySelector('#questions-form select[name="quiz_id"]');
+            quizzesSelect.innerHTML = '<option value="">Pilih Kuis</option>';
+            quizzes.forEach(q => {
+                const option = document.createElement('option');
+                option.value = q.id;
+                option.textContent = q.title;
+                quizzesSelect.appendChild(option);
+            });
+            
+            // Clear options container
+            const optionsContainer = document.getElementById('quiz-options-container');
+            optionsContainer.innerHTML = '';
+            
+            // Add initial options
+            addOption();
+            addOption();
+            
+            document.getElementById('questions-modal').style.display = 'flex';
+        }
+
+        function closeQuestionsModal() {
+            document.getElementById('questions-modal').style.display = 'none';
+        }
+
+        function editQuestions(id) {
+            const questionsData = questions.find(q => q.id === id);
+            if (!questionsData) return;
+            
+            document.getElementById('questions-modal-title').textContent = 'Edit Pertanyaan';
+            document.getElementById('questions-id').value = questionsData.id;
+            document.querySelector('#questions-form textarea[name="question_text"]').value = questionsData.question_text;
+            document.querySelector('#questions-form input[name="order_index"]').value = questionsData.order_index;
+            document.querySelector('#questions-form select[name="quiz_id"]').value = questionsData.quiz_id;
+            
+            // Clear options container
+            const optionsContainer = document.getElementById('quiz-options-container');
+            optionsContainer.innerHTML = '';
+            optionCounter = 0;
+            
+            // Add existing options
+            const questionOptions = options.filter(o => o.question_id === id);
+            questionOptions.forEach(opt => {
+                addOption(opt.option_text, opt.is_correct);
+            });
+            
+            currentEditingItem = questionsData;
+            currentEditingType = 'questions';
+            document.getElementById('questions-modal').style.display = 'flex';
+        }
+
+        function addOption(text = '', isCorrect = false) {
+            const optionsContainer = document.getElementById('quiz-options-container');
+            const optionId = `option-${optionCounter++}`;
+            const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+            const letter = letters[optionsContainer.children.length % letters.length];
+            
+            const optionElement = document.createElement('div');
+            optionElement.className = `option-item ${isCorrect ? 'correct' : ''}`;
+            optionElement.innerHTML = `
+                <div class="option-letter">${letter}</div>
+                <div class="option-text">
+                    <input type="text" class="form-control" value="${text}" placeholder="Teks opsi jawaban" data-option-id="${optionId}">
+                </div>
+                <div>
+                    <input type="radio" name="correct_option" ${isCorrect ? 'checked' : ''} onchange="setCorrectOption('${optionId}')">
+                    <label>Benar</label>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="removeOption(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            optionsContainer.appendChild(optionElement);
+        }
+
+        function removeOption(button) {
+            const optionItem = button.closest('.option-item');
+            optionItem.remove();
+        }
+
+        function setCorrectOption(optionId) {
+            // Remove correct class from all options
+            document.querySelectorAll('.option-item').forEach(item => {
+                item.classList.remove('correct');
+            });
+            
+            // Add correct class to selected option
+            const selectedOption = document.querySelector(`[data-option-id="${optionId}"]`).closest('.option-item');
+            selectedOption.classList.add('correct');
+        }
+
+        function saveQuestions() {
+            const form = document.getElementById('questions-form');
+            const formData = new FormData(form);
+            
+            // Collect options data
+            const optionElements = document.querySelectorAll('.option-item');
+            const optionsData = [];
+            let hasCorrectOption = false;
+            
+            optionElements.forEach((element, index) => {
+                const input = element.querySelector('input[type="text"]');
+                const isCorrect = element.classList.contains('correct');
+                const optionText = input.value.trim();
+                
+                if (optionText) {
+                    optionsData.push({
+                        text: optionText,
+                        is_correct: isCorrect
+                    });
+                    
+                    if (isCorrect) hasCorrectOption = true;
+                }
+            });
+            
+            // Validate
+            if (optionsData.length < 2) {
+                showNotification('Minimal harus ada 2 opsi jawaban!', 'warning');
+                return;
+            }
+            
+            if (!hasCorrectOption) {
+                showNotification('Harus ada satu opsi yang benar!', 'warning');
+                return;
+            }
+            
+            const questionsData = {
+                quiz_id: parseInt(formData.get('quiz_id')),
+                question_text: formData.get('question_text'),
+                order_index: parseInt(formData.get('order_index')) || 1
+            };
+            
+            if (currentEditingItem) {
+                // Update existing questions
+                const index = questions.findIndex(q => q.id === currentEditingItem.id);
+                questions[index] = { ...questions[index], ...questionsData };
+                
+                // Update options
+                const existingOptions = options.filter(o => o.question_id === currentEditingItem.id);
+                existingOptions.forEach(opt => {
+                    const optionIndex = options.findIndex(o => o.id === opt.id);
+                    if (optionIndex !== -1) {
+                        options.splice(optionIndex, 1);
+                    }
+                });
+            } else {
+                // Add new questions
+                questionsData.id = questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1;
+                questions.push(questionsData);
+            }
+            
+            // Add options
+            optionsData.forEach(optData => {
+                const optionId = options.length > 0 ? Math.max(...options.map(o => o.id)) + 1 : 1;
+                options.push({
+                    id: optionId,
+                    question_id: questionsData.id,
+                    option_text: optData.text,
+                    is_correct: optData.is_correct
+                });
+            });
+            
+            // Update question count in quiz
+            const quiz = quizzes.find(q => q.id === questionsData.quiz_id);
+            if (quiz) {
+                quiz.question_count = questions.filter(q => q.quiz_id === questionsData.quiz_id).length;
+            }
+            
+            renderQuestionsTable();
+            renderQuizzesTable();
+            closeQuestionsModal();
+            showNotification('Pertanyaan berhasil disimpan!', 'success');
+        }
+
+        // Update question count when quiz is selected
+        function updateQuestionCount() {
+            const quizId = document.querySelector('#questions-form select[name="quiz_id"]').value;
+            if (quizId) {
+                const quizQuestions = questions.filter(q => q.quiz_id === parseInt(quizId));
+                const nextOrder = quizQuestions.length > 0 ? Math.max(...quizQuestions.map(q => q.order_index)) + 1 : 1;
+                document.querySelector('#questions-form input[name="order_index"]').value = nextOrder;
+            }
+        }
+
+        // ========== REWARDS FUNCTIONS ==========
+        function showRewardsModal() {
+            document.getElementById('rewards-modal-title').textContent = 'Tambah Reward Baru';
+            document.getElementById('rewards-form').reset();
+            document.getElementById('rewards-id').value = '';
+            document.getElementById('rewards-logo-preview').style.display = 'none';
+            currentEditingItem = null;
+            currentEditingType = 'rewards';
+            
+            document.getElementById('rewards-modal').style.display = 'flex';
+        }
+
+        function closeRewardsModal() {
+            document.getElementById('rewards-modal').style.display = 'none';
+        }
+
+        function editRewards(id) {
+            const rewardsData = rewards.find(r => r.id === id);
+            if (!rewardsData) return;
+            
+            document.getElementById('rewards-modal-title').textContent = 'Edit Reward';
+            document.getElementById('rewards-id').value = rewardsData.id;
+            document.querySelector('#rewards-form input[name="title"]').value = rewardsData.title;
+            document.querySelector('#rewards-form input[name="subtitle"]').value = rewardsData.subtitle;
+            document.querySelector('#rewards-form input[name="points_cost"]').value = rewardsData.points_cost;
+            document.querySelector('#rewards-form input[name="stock"]').value = rewardsData.stock;
+            document.querySelector('#rewards-form input[name="bg_color"]').value = rewardsData.bg_color;
+            document.querySelector('#rewards-form input[name="button_color"]').value = rewardsData.button_color;
+            document.querySelector('#rewards-form select[name="type"]').value = rewardsData.type;
+            
+            if (rewardsData.logo_url) {
+                document.getElementById('rewards-logo-preview').src = rewardsData.logo_url;
+                document.getElementById('rewards-logo-preview').style.display = 'block';
+            }
+            
+            currentEditingItem = rewardsData;
+            currentEditingType = 'rewards';
+            document.getElementById('rewards-modal').style.display = 'flex';
+        }
+
+        function saveRewards() {
+            const form = document.getElementById('rewards-form');
+            const formData = new FormData(form);
+            const logoFile = document.getElementById('rewards-logo-upload').files[0];
+            
+            const saveRewardsData = (logoUrl = null) => {
+                const rewardsData = {
+                    title: formData.get('title'),
+                    subtitle: formData.get('subtitle'),
+                    points_cost: parseInt(formData.get('points_cost')),
+                    stock: parseInt(formData.get('stock')),
+                    bg_color: formData.get('bg_color'),
+                    button_color: formData.get('button_color'),
+                    type: formData.get('type'),
+                    logo_url: logoUrl
+                };
+                
+                if (currentEditingItem) {
+                    // Update existing rewards
+                    const index = rewards.findIndex(r => r.id === currentEditingItem.id);
+                    rewards[index] = { ...rewards[index], ...rewardsData };
+                } else {
+                    // Add new rewards
+                    rewardsData.id = rewards.length > 0 ? Math.max(...rewards.map(r => r.id)) + 1 : 1;
+                    rewards.push(rewardsData);
+                }
+                
+                renderRewardsTable();
+                closeRewardsModal();
+                showNotification('Reward berhasil disimpan!', 'success');
+            };
+            
+            if (logoFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveRewardsData(e.target.result);
+                };
+                reader.readAsDataURL(logoFile);
+            } else if (currentEditingItem && currentEditingItem.logo_url) {
+                saveRewardsData(currentEditingItem.logo_url);
+            } else {
+                saveRewardsData();
+            }
+        }
+
+        // ========== CHAT ROOMS FUNCTIONS ==========
+        function showChatRoomsModal() {
+            document.getElementById('chat-rooms-modal-title').textContent = 'Tambah Room Chat Baru';
+            document.getElementById('chat-rooms-form').reset();
+            document.getElementById('chat-rooms-id').value = '';
+            currentEditingItem = null;
+            currentEditingType = 'chat_rooms';
+            
+            document.getElementById('chat-rooms-modal').style.display = 'flex';
+        }
+
+        function closeChatRoomsModal() {
+            document.getElementById('chat-rooms-modal').style.display = 'none';
+        }
+
+        function editChatRooms(id) {
+            const chatRoomsData = chat_rooms.find(cr => cr.id === id);
+            if (!chatRoomsData) return;
+            
+            document.getElementById('chat-rooms-modal-title').textContent = 'Edit Room Chat';
+            document.getElementById('chat-rooms-id').value = chatRoomsData.id;
+            document.querySelector('#chat-rooms-form input[name="title"]').value = chatRoomsData.title;
+            document.querySelector('#chat-rooms-form textarea[name="description"]').value = chatRoomsData.description || '';
+            
+            currentEditingItem = chatRoomsData;
+            currentEditingType = 'chat_rooms';
+            document.getElementById('chat-rooms-modal').style.display = 'flex';
+        }
+
+        function saveChatRooms() {
+            const form = document.getElementById('chat-rooms-form');
+            const formData = new FormData(form);
+            
+            const chatRoomsData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                created_at: new Date().toISOString()
+            };
+            
+            if (currentEditingItem) {
+                // Update existing chat_rooms
+                const index = chat_rooms.findIndex(cr => cr.id === currentEditingItem.id);
+                chat_rooms[index] = { ...chat_rooms[index], ...chatRoomsData };
+            } else {
+                // Add new chat_rooms
+                chatRoomsData.id = chat_rooms.length > 0 ? Math.max(...chat_rooms.map(cr => cr.id)) + 1 : 1;
+                chat_rooms.push(chatRoomsData);
+            }
+            
+            renderChatRoomsTable();
+            closeChatRoomsModal();
+            showNotification('Room chat berhasil disimpan!', 'success');
+        }
+
+        // ========== NOTIFICATIONS FUNCTIONS ==========
+        function showNotificationsModal() {
+            document.getElementById('notifications-modal-title').textContent = 'Tambah Notifikasi Baru';
+            document.getElementById('notifications-form').reset();
+            document.getElementById('notifications-id').value = '';
+            currentEditingItem = null;
+            currentEditingType = 'notifications';
+            
+            // Populate users dropdown
+            const usersSelect = document.querySelector('#notifications-form select[name="user_id"]');
+            usersSelect.innerHTML = '<option value="">Pilih Pengguna</option>';
+            profiles.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = p.full_name;
+                usersSelect.appendChild(option);
+            });
+            
+            document.getElementById('notifications-modal').style.display = 'flex';
+        }
+
+        function closeNotificationsModal() {
+            document.getElementById('notifications-modal').style.display = 'none';
+        }
+
+        function editNotifications(id) {
+            const notificationsData = notifications.find(n => n.id === id);
+            if (!notificationsData) return;
+            
+            document.getElementById('notifications-modal-title').textContent = 'Edit Notifikasi';
+            document.getElementById('notifications-id').value = notificationsData.id;
+            document.querySelector('#notifications-form select[name="user_id"]').value = notificationsData.user_id;
+            document.querySelector('#notifications-form select[name="type"]').value = notificationsData.type;
+            document.querySelector('#notifications-form input[name="title"]').value = notificationsData.title;
+            document.querySelector('#notifications-form textarea[name="message"]').value = notificationsData.message || '';
+            document.querySelector('#notifications-form input[name="badge_count"]').value = notificationsData.badge_count;
+            document.querySelector('#notifications-form select[name="is_read"]').value = notificationsData.is_read.toString();
+            
+            currentEditingItem = notificationsData;
+            currentEditingType = 'notifications';
+            document.getElementById('notifications-modal').style.display = 'flex';
+        }
+
+        function saveNotifications() {
+            const form = document.getElementById('notifications-form');
+            const formData = new FormData(form);
+            
+            const notificationsData = {
+                user_id: formData.get('user_id'),
+                type: formData.get('type'),
+                title: formData.get('title'),
+                message: formData.get('message'),
+                badge_count: parseInt(formData.get('badge_count')),
+                is_read: formData.get('is_read') === 'true',
+                created_at: new Date().toISOString()
+            };
+            
+            if (currentEditingItem) {
+                // Update existing notifications
+                const index = notifications.findIndex(n => n.id === currentEditingItem.id);
+                notifications[index] = { ...notifications[index], ...notificationsData };
+            } else {
+                // Add new notifications
+                notificationsData.id = notifications.length > 0 ? Math.max(...notifications.map(n => n.id)) + 1 : 1;
+                notifications.push(notificationsData);
+            }
+            
+            renderNotificationsTable();
+            closeNotificationsModal();
+            showNotification('Notifikasi berhasil disimpan!', 'success');
+        }
+
+        // ========== PROFILE FUNCTIONS ==========
+        function showProfileModal() {
+            const form = document.getElementById('profile-form');
+            form.querySelector('input[name="full_name"]').value = adminData.full_name;
+            form.querySelector('input[name="email"]').value = adminData.email;
+            form.querySelector('input[name="phone"]').value = adminData.mobile_no || '';
+            
+            if (adminData.avatar_url) {
+                document.getElementById('avatar-preview').src = adminData.avatar_url;
+                document.getElementById('avatar-preview').style.display = 'block';
+            }
+            
+            document.getElementById('profile-modal').style.display = 'flex';
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').style.display = 'none';
+        }
+
+        function saveProfile() {
+            const form = document.getElementById('profile-form');
+            const formData = new FormData(form);
+            const avatarFile = document.getElementById('avatar-upload').files[0];
+            
+            const saveProfileData = (avatarUrl = null) => {
+                adminData.full_name = formData.get('full_name');
+                adminData.email = formData.get('email');
+                adminData.mobile_no = formData.get('phone');
+                adminData.avatar_url = avatarUrl || adminData.avatar_url;
+                
+                // Update in admins array too
+                const adminIndex = admins.findIndex(a => a.id === adminData.id);
+                if (adminIndex !== -1) {
+                    admins[adminIndex] = { ...admins[adminIndex], ...adminData };
+                    renderAdminsTable();
+                }
+                
+                updateUserProfile();
+                closeProfileModal();
+                showNotification('Profil berhasil diperbarui!', 'success');
+            };
+            
+            if (avatarFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveProfileData(e.target.result);
+                };
+                reader.readAsDataURL(avatarFile);
+            } else {
+                saveProfileData();
+            }
+        }
+
+        // ========== QUIZ FUNCTIONS ==========
+        // Fungsi untuk membuka window kuis
+        function openQuizWindow() {
+            const quizWindow = window.open('kuis.html', '_blank', 'width=1200,height=800');
+            if (quizWindow) {
+                quizWindow.quizzes = quizzes;
+                quizWindow.questions = questions;
+                quizWindow.options = options;
+            }
+        }
+        
+        // Fungsi untuk menambah/update kuis
+        function updateQuiz(quizData) {
+            const existingQuizIndex = quizzes.findIndex(q => q.id === quizData.id);
+            if (existingQuizIndex > -1) {
+                // Update kuis yang sudah ada
+                quizzes[existingQuizIndex] = { ...quizzes[existingQuizIndex], ...quizData };
+            } else {
+                // Tambah kuis baru
+                quizData.id = quizzes.length > 0 ? Math.max(...quizzes.map(q => q.id)) + 1 : 1;
+                quizzes.push(quizData);
+            }
+            updateDashboardStats();
+        }
+
+        // Fungsi untuk menghapus kuis
+        function deleteQuiz(id) {
+            quizzes = quizzes.filter(q => q.id !== id);
+            updateDashboardStats();
+        }
+
+        // ========== UTILITY FUNCTIONS ==========
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function previewVideo(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function confirmDelete(type, id) {
+            const messages = {
+                'admins': 'Apakah Anda yakin ingin menghapus admin ini?',
+                'categories': 'Apakah Anda yakin ingin menghapus kategori ini?',
+                'profiles': 'Apakah Anda yakin ingin menghapus pengguna ini?',
+                'materi': 'Apakah Anda yakin ingin menghapus materi ini?',
+                'quizzes': 'Apakah Anda yakin ingin menghapus kuis ini?',
+                'questions': 'Apakah Anda yakin ingin menghapus pertanyaan ini?',
+                'quiz_attempts': 'Apakah Anda yakin ingin menghapus hasil kuis ini?',
+                'rewards': 'Apakah Anda yakin ingin menghapus reward ini?',
+                'chat_rooms': 'Apakah Anda yakin ingin menghapus room chat ini?',
+                'notifications': 'Apakah Anda yakin ingin menghapus notifikasi ini?'
+            };
+            
+            document.getElementById('confirm-message').textContent = messages[type] || 'Apakah Anda yakin ingin menghapus item ini?';
+            
+            const deleteBtn = document.getElementById('confirm-delete-btn');
+            deleteBtn.onclick = function() {
+                deleteItem(type, id);
+                closeConfirmModal();
+            };
+            
+            document.getElementById('confirm-modal').style.display = 'flex';
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').style.display = 'none';
+        }
+
+        function deleteItem(type, id) {
+            switch(type) {
+                case 'admins':
+                    admins = admins.filter(a => a.id !== id);
+                    renderAdminsTable();
+                    break;
+                case 'categories':
+                    categories = categories.filter(c => c.id !== id);
+                    materi = materi.filter(m => m.category_id !== id);
+                    renderCategoriesTable();
+                    break;
+                case 'profiles':
+                    profiles = profiles.filter(p => p.id !== id);
+                    quiz_attempts = quiz_attempts.filter(qa => qa.user_id !== id);
+                    notifications = notifications.filter(n => n.user_id !== id);
+                    renderProfilesTable();
+                    break;
+                case 'materi':
+                    materi = materi.filter(m => m.id !== id);
+                    user_favorites = user_favorites.filter(uf => uf.materi_id !== id);
+                    renderMateriTable();
+                    break;
+                case 'quizzes':
+                    quizzes = quizzes.filter(q => q.id !== id);
+                    questions = questions.filter(q => q.quiz_id !== id);
+                    quiz_attempts = quiz_attempts.filter(qa => qa.quiz_id !== id);
+                    renderQuizzesTable();
+                    renderQuestionsTable();
+                    break;
+                case 'questions':
+                    questions = questions.filter(q => q.id !== id);
+                    options = options.filter(o => o.question_id !== id);
+                    
+                    // Update question count in quiz
+                    const question = questions.find(q => q.id === id);
+                    if (question) {
+                        const quiz = quizzes.find(q => q.id === question.quiz_id);
+                        if (quiz) {
+                            quiz.question_count = questions.filter(q => q.quiz_id === question.quiz_id).length;
+                        }
+                    }
+                    
+                    renderQuestionsTable();
+                    renderQuizzesTable();
+                    break;
+                case 'quiz_attempts':
+                    quiz_attempts = quiz_attempts.filter(qa => qa.id !== id);
+                    renderQuizAttemptsTable();
+                    break;
+                case 'rewards':
+                    rewards = rewards.filter(r => r.id !== id);
+                    renderRewardsTable();
+                    break;
+                case 'chat_rooms':
+                    chat_rooms = chat_rooms.filter(cr => cr.id !== id);
+                    messages = messages.filter(m => m.room_id !== id);
+                    renderChatRoomsTable();
+                    break;
+                case 'notifications':
+                    notifications = notifications.filter(n => n.id !== id);
+                    renderNotificationsTable();
+                    break;
+            }
+            
+            updateDashboardStats();
+            showNotification('Item berhasil dihapus!', 'success');
+        }
+
+        function viewQuizAttemptDetails(id) {
+            const attempt = quiz_attempts.find(qa => qa.id === id);
+            if (attempt) {
+                alert(`Detail Hasil Kuis:\nID: ${attempt.id}\nSkor: ${attempt.score}/${attempt.total_questions}\nPoints Earned: ${attempt.points_earned}`);
+            }
+        }
+
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                background: ${type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : type === 'danger' ? '#dc3545' : '#17a2b8'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 1001;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times' : 'info'}-circle"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                .quiz-tab {
+                    display: none;
+                }
+                .quiz-tab.active {
+                    display: block;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            initializeSampleData();
+        });
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>
